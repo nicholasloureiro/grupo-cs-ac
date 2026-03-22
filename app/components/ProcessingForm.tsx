@@ -23,6 +23,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 type ProcessingState = 'idle' | 'processing' | 'success' | 'error';
 
 export default function ProcessingForm() {
+  const [reportType, setReportType] = useState<'primary' | 'secondary'>('primary');
   const [weeklyReport, setWeeklyReport] = useState<File[]>([]);
   const [inventoryReport, setInventoryReport] = useState<File[]>([]);
   const [nfPdfs, setNfPdfs] = useState<File[]>([]);
@@ -128,7 +129,8 @@ export default function ProcessingForm() {
         formData.append('mazza_report', mazzaReport[0]);
       }
 
-      const response = await fetch(`${API_URL}/api/reports/process`, {
+      const endpoint = reportType === 'secondary' ? '/api/reports/process-secondary' : '/api/reports/process';
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         body: formData,
       });
@@ -166,6 +168,7 @@ export default function ProcessingForm() {
   };
 
   const handleReset = () => {
+    setReportType('primary');
     setWeeklyReport([]);
     setInventoryReport([]);
     setNfPdfs([]);
@@ -242,12 +245,41 @@ export default function ProcessingForm() {
       {/* Form sections - visible based on state */}
       {showForm && (
         <>
+          {/* Report Type Toggle */}
+          <section className="bg-white rounded-2xl p-4 shadow-md">
+            <div className="flex rounded-xl bg-gray-100 p-1">
+              <button
+                onClick={() => setReportType('primary')}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  reportType === 'primary'
+                    ? 'bg-white text-chocolate-dark shadow-sm'
+                    : 'text-chocolate/60 hover:text-chocolate'
+                }`}
+              >
+                Relatório Semanal
+              </button>
+              <button
+                onClick={() => setReportType('secondary')}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  reportType === 'secondary'
+                    ? 'bg-white text-chocolate-dark shadow-sm'
+                    : 'text-chocolate/60 hover:text-chocolate'
+                }`}
+              >
+                Relatório Semanal Secundário
+              </button>
+            </div>
+          </section>
+
           {/* Section 1: Weekly Report */}
           <section className="bg-white rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
             <FileUpload
-              label="Relatorio Semanal"
+              label={reportType === 'secondary' ? 'Relatório Semanal Secundário' : 'Relatorio Semanal'}
               icon={<FileSpreadsheet size={22} className="text-chocolate-dark" strokeWidth={1.5} />}
-              helperText="Arraste o arquivo Excel do relatorio semanal aqui ou clique para selecionar"
+              helperText={reportType === 'secondary'
+                ? 'Arraste o arquivo Excel do relatório semanal secundário aqui ou clique para selecionar'
+                : 'Arraste o arquivo Excel do relatorio semanal aqui ou clique para selecionar'
+              }
               accept={{
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
                 'application/vnd.ms-excel': ['.xls'],
